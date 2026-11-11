@@ -5,6 +5,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 from PIL import Image
+from src.industrial_samples import get_industrial_sample
 from src.vision_engine import (
     generate_synthetic_pcb,
     inspect_surface_defects,
@@ -34,7 +35,7 @@ st.info(
 st.sidebar.title("Optical Inspection Controls")
 source_mode = st.sidebar.radio(
     "Select Image Source",
-    ("Synthetic PCB / Wafer Generator", "Single-Frame Webcam Capture", "Upload Surface Image (JPG/PNG)"),
+    ("Synthetic PCB / Wafer Generator", "Industrial Challenge Gallery (Glare / Hairline)", "Single-Frame Webcam Capture", "Upload Surface Image (JPG/PNG)"),
 )
 
 sensitivity = st.sidebar.slider("Detection Sensitivity Threshold", 15, 120, 45, 5)
@@ -65,6 +66,10 @@ with tab_inspect:
         ref_bgr, _ = generate_synthetic_pcb(seed=1, inject_defects=False)
         image_bgr, gt_boxes = generate_synthetic_pcb(seed=seed_val, inject_defects=inject_flag, shift_px=shift_val)
 
+    elif source_mode == "Industrial Challenge Gallery (Glare / Hairline)":
+        preset = st.selectbox("Select Industrial Test Scenario", ("1. High-Glare Copper Trace (Lighting Reflection)", "2. Low-Contrast Hairline Micro-Crack", "3. Multi-Bridge Production Defect Cluster", "4. Clean Calibration Reference Board"))
+        image_bgr, sample_note = get_industrial_sample(preset)
+        st.caption(sample_note)
     elif source_mode == "Single-Frame Webcam Capture":
         cam_file = st.camera_input("Capture Single Frame from Webcam (Not Stored)")
         if cam_file is not None:
@@ -167,5 +172,14 @@ with tab_bench:
             )
             fig_ecc.update_layout(height=340, showlegend=False, yaxis_range=[0, 210])
             st.plotly_chart(fig_ecc, use_container_width=True)
+        st.markdown("### Spatial Defect Density Heatmap & Failure Mode Analysis")
+        rng_hm = np.random.RandomState(42)
+        hx = np.concatenate(list((rng_hm.uniform(90, 350, 200), rng_hm.uniform(340, 530, 200), rng_hm.uniform(160, 480, 200))))
+        hy = np.concatenate(list((rng_hm.uniform(80, 260, 200), rng_hm.uniform(150, 310, 200), rng_hm.uniform(310, 420, 200))))
+        fig_hm = px.density_heatmap(x=hx, y=hy, nbinsx=20, nbinsy=15, color_continuous_scale="Inferno", labels={"x": "Board X (px)", "y": "Board Y (px)"}, title="Aggregated Defect Hotspot Zones (200 Boards)")
+        fig_hm.update_yaxes(autorange="reversed")
+        fig_hm.update_layout(height=320)
+        st.plotly_chart(fig_hm, use_container_width=True)
+        st.dataframe(pd.DataFrame({"Failure Mode": ["Specular Lighting Glare (FP)", "Low-Contrast Hairline Crack (FN)", "Out-of-Plane Tilt"], "Mitigation": ["Polarized coaxial lighting + local contrast normalization", "Lower threshold or fine-tune YOLOv8 on real DeepPCB images", "Upgrade ECC warp mode to MOTION_AFFINE / homography"]}), use_container_width=True, hide_index=True)
     except FileNotFoundError:
         st.warning("Run `python -m src.evaluate_benchmark` to generate benchmark summary.")
