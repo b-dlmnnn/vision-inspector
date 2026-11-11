@@ -5,6 +5,7 @@ import pandas as pd
 import plotly.express as px
 import streamlit as st
 from PIL import Image
+from src.fusion_engine import compute_multimodal_risk, simulate_fab_lot_fusion
 from src.industrial_samples import get_industrial_sample
 from src.vision_engine import (
     generate_synthetic_pcb,
@@ -183,3 +184,30 @@ with tab_bench:
         st.dataframe(pd.DataFrame({"Failure Mode": ["Specular Lighting Glare (FP)", "Low-Contrast Hairline Crack (FN)", "Out-of-Plane Tilt"], "Mitigation": ["Polarized coaxial lighting + local contrast normalization", "Lower threshold or fine-tune YOLOv8 on real DeepPCB images", "Upgrade ECC warp mode to MOTION_AFFINE / homography"]}), use_container_width=True, hide_index=True)
     except FileNotFoundError:
         st.warning("Run `python -m src.evaluate_benchmark` to generate benchmark summary.")
+
+
+with tab_fusion:
+    st.subheader("Multi-Modal Fab Quality Fusion (SiliconGuard Sensor + Vision Inspector)")
+    st.caption("Late-fusion decision architecture combining upstream machine telemetry risk with downstream optical defect inspection.")
+    fc1, fc2, fc3 = st.columns(3)
+    with fc1:
+        sim_sensor_p = st.slider("Upstream Sensor Defect Risk (from SiliconGuard AI %)", 1, 99, 42, 1) / 100.0
+    with fc2:
+        sim_vis_cnt = st.slider("Optical Camera Defects Detected", 0, 5, 1, 1)
+    with fc3:
+        sim_vis_area = st.slider("Total Optical Defect Area (px)", 0, 1200, 260, 20)
+
+    f_res = compute_multimodal_risk(sim_sensor_p, sim_vis_cnt, sim_vis_area)
+    m_f1, m_f2, m_f3, m_f4 = st.columns(4)
+    m_f1.metric("Sensor Risk (Telemetry)", f"{f_res['sensor_risk_pct']}%")
+    m_f2.metric("Vision Risk (Optical)", f"{f_res['vision_risk_pct']}%")
+    m_f3.metric("Fused Multi-Modal Risk", f"{f_res['fused_risk_pct']}%")
+    m_f4.metric("Fab Routing Decision", f_res["routing"])
+    st.info(f"**Unified Quality Gate Output:** {f_res['decision']}")
+
+    st.markdown("### Simulated 100-Wafer Multi-Modal Production Lot")
+    lot_df = simulate_fab_lot_fusion(n_wafers=100, seed=42)
+    st.dataframe(lot_df.head(15), use_container_width=True, hide_index=True)
+
+    st.markdown("### Production Microservice Architecture (FastAPI + Docker)")
+    st.code("uvicorn api:app --host 0.0.0.0 --port 8000\n# POST /api/v1/inspect-multimodal -> JSON telemetry + routing decision", language="bash")

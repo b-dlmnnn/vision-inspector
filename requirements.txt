@@ -5,4 +5,8 @@ pandas
 pillow
 plotly
 scikit-learn
+fastapi
+uvicorn
+pydantic
+httpx
 pytest
