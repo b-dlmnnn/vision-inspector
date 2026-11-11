@@ -4,4 +4,5 @@ numpy
 pandas
 pillow
 plotly
+scikit-learn
 pytest

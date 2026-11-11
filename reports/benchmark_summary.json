@@ -1,0 +1,11 @@
+{
+  "n_eval_boards": 200,
+  "detection_precision": 0.7514,
+  "detection_recall": 0.665,
+  "detection_f1": 0.7056,
+  "mean_iou": 0.7976,
+  "rule_based_cls_acc": 0.99,
+  "random_forest_cls_acc": 1.0,
+  "shift_5px_false_alarms_without_ecc": 183,
+  "shift_5px_false_alarms_with_ecc": 8
+}
