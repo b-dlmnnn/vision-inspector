@@ -142,15 +142,30 @@ with tab_bench:
         })
         st.dataframe(comp_table, use_container_width=True, hide_index=True)
 
-        fig_ecc = px.bar(
-            x=["Without ECC Alignment", "With ECC Sub-Pixel Alignment"],
-            y=[b["shift_5px_false_alarms_without_ecc"], b["shift_5px_false_alarms_with_ecc"]],
-            color=["Without ECC Alignment", "With ECC Sub-Pixel Alignment"],
-            color_discrete_sequence=["#EF553B", "#00CC96"],
-            labels={"x": "Alignment Configuration (5px Camera Shift Stress Test)", "y": "Total False Alarms (Across 50 Boards)"},
-            title="Shift Robustness Benchmark: False Alarm Reduction via ECC Alignment (-95.6%)",
-        )
-        fig_ecc.update_layout(height=340, showlegend=False)
-        st.plotly_chart(fig_ecc, use_container_width=True)
+        col_g1, col_g2 = st.columns(2)
+        with col_g1:
+            fig_met = px.bar(
+                x=["Precision", "Recall", "F1-Score", "Mean IoU"],
+                y=[b["detection_precision"], b["detection_recall"], b["detection_f1"], b["mean_iou"]],
+                text_auto=".3f",
+                color=["Precision", "Recall", "F1-Score", "Mean IoU"],
+                color_discrete_sequence=["#636EFA", "#00CC96", "#AB63FA", "#FFA15A"],
+                labels={"x": "Evaluation Metric (200 Boards)", "y": "Score (0 - 1)"},
+                title="Defect Detection & Localization Benchmark",
+            )
+            fig_met.update_layout(height=340, showlegend=False, yaxis_range=[0, 1.0])
+            st.plotly_chart(fig_met, use_container_width=True)
+        with col_g2:
+            fig_ecc = px.bar(
+                x=["Without ECC Alignment", "With ECC Alignment"],
+                y=[b["shift_5px_false_alarms_without_ecc"], b["shift_5px_false_alarms_with_ecc"]],
+                text_auto=True,
+                color=["Without ECC Alignment", "With ECC Alignment"],
+                color_discrete_sequence=["#EF553B", "#00CC96"],
+                labels={"x": "5px Camera Shift Stress Test (50 Boards)", "y": "False Alarms"},
+                title="ECC Alignment Impact: False Alarms (-95.6%)",
+            )
+            fig_ecc.update_layout(height=340, showlegend=False, yaxis_range=[0, 210])
+            st.plotly_chart(fig_ecc, use_container_width=True)
     except FileNotFoundError:
         st.warning("Run `python -m src.evaluate_benchmark` to generate benchmark summary.")
