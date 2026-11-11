@@ -49,7 +49,7 @@ st.sidebar.markdown("### Economic Bridge (Linked to SiliconGuard AI)")
 cost_missed = st.sidebar.number_input("Packaging Loss per Missed Defect ($)", 500, 25000, 4500, 100)
 cost_false_alarm = st.sidebar.number_input("Quarantine Cost per False Alarm ($)", 50, 5000, 400, 50)
 
-tab_inspect, tab_bench = st.tabs(["1. Optical Inspection & Cost Gate", "2. 200-Board Benchmark & Robustness"])
+tab_inspect, tab_bench, tab_fusion = st.tabs(list(("1. Optical Inspection & Cost Gate", "2. Benchmark, Heatmap & Failure Analysis", "3. Multi-Modal Sensor+Vision Fusion & API")))
 
 with tab_inspect:
     image_bgr = None
