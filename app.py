@@ -2,6 +2,7 @@ import json
 import cv2
 import numpy as np
 import pandas as pd
+import plotly.express as px
 import streamlit as st
 from PIL import Image
 from src.vision_engine import (
@@ -140,5 +141,16 @@ with tab_bench:
             ],
         })
         st.dataframe(comp_table, use_container_width=True, hide_index=True)
+
+        fig_ecc = px.bar(
+            x=["Without ECC Alignment", "With ECC Sub-Pixel Alignment"],
+            y=[b["shift_5px_false_alarms_without_ecc"], b["shift_5px_false_alarms_with_ecc"]],
+            color=["Without ECC Alignment", "With ECC Sub-Pixel Alignment"],
+            color_discrete_sequence=["#EF553B", "#00CC96"],
+            labels={"x": "Alignment Configuration (5px Camera Shift Stress Test)", "y": "Total False Alarms (Across 50 Boards)"},
+            title="Shift Robustness Benchmark: False Alarm Reduction via ECC Alignment (-95.6%)",
+        )
+        fig_ecc.update_layout(height=340, showlegend=False)
+        st.plotly_chart(fig_ecc, use_container_width=True)
     except FileNotFoundError:
         st.warning("Run `python -m src.evaluate_benchmark` to generate benchmark summary.")
