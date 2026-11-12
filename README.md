@@ -29,3 +29,8 @@ python -m src.evaluate_benchmark
 python -m pytest -v
 streamlit run app.py
 ```
+
+## 5. Multi-Class Defect Classification & Parameter Justification
+- **3-Class Random Forest Confusion Matrix (200 Eval Boards):** Evaluated across `Linear Scratch`, `Solder Bridge`, and `Micro-Particle` contours (`100.00%` classification accuracy vs. `99.00%` rule-based baseline).
+- **Morphological Kernel `(15, 15)` & Sensitivity `45`:** Selected to isolate micro-defects (width 3–25 px) while suppressing Gaussian sensor noise (`sigma=4.0`).
+- **Minimum Contour Area `35 px`:** Filters sub-millimeter dust specks without missing hairline scratches.
