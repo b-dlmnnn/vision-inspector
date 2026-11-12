@@ -28,7 +28,7 @@ def compute_multimodal_risk(
         routing = "SECONDARY_LAB_CHECK"
     else:
         decision = "✅ PASS TO PACKAGING (Cleared)"
-        routing = "RELEASE_TO_CUSTOMER"
+        routing = "RELEASE"
 
     return {
         "sensor_risk_pct": round(sensor_p * 100, 2),

@@ -27,7 +27,7 @@ def test_defective_board_with_ml_and_ecc():
 def test_multimodal_fusion_logic():
     low = compute_multimodal_risk(sensor_prob=0.10, vision_defects_count=0, vision_total_area_px=0)
     high = compute_multimodal_risk(sensor_prob=0.80, vision_defects_count=2, vision_total_area_px=500)
-    assert low["routing"] == "RELEASE_TO_CUSTOMER"
+    assert low["routing"] == "RELEASE"
     assert high["routing"] == "BLOCK_PACKAGING"
 
 

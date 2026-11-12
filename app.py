@@ -192,7 +192,7 @@ with tab_fusion:
         "**Integration Scope Notice:** UCI SECOM sensor wafers and synthetic PCB images come from separate datasets (no 1-to-1 physical pairing). "
         "This tab demonstrates a **decision-level late-fusion architecture** using interactive scenario inputs and a 100-wafer simulated lot.\n\n"
         "**Explicit Formula:** `Fused Risk = 0.45 × Sensor_Risk + 0.45 × Vision_Risk + 0.10 × (Sensor_Risk × Vision_Risk)` | "
-        "**Routing Rule:** `>= 65%` or `>= 2 defects` → **BLOCK_PACKAGING** | `35%–65%` or `Sensor >= 75%` → **SECONDARY_LAB_CHECK** | `< 35%` → **RELEASE_TO_CUSTOMER**"
+        "**Routing Rule:** `>= 65%` or `>= 2 defects` → **BLOCK_PACKAGING** | `35%–65%` or `Sensor >= 75%` → **SECONDARY_LAB_CHECK** | `< 35%` → **RELEASE**"
     )
     fc1, fc2, fc3 = st.columns(3)
     with fc1:
