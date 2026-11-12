@@ -49,7 +49,7 @@ st.sidebar.markdown("### Economic Bridge (Linked to SiliconGuard AI)")
 cost_missed = st.sidebar.number_input("Packaging Loss per Missed Defect ($)", 500, 25000, 4500, 100)
 cost_false_alarm = st.sidebar.number_input("Quarantine Cost per False Alarm ($)", 50, 5000, 400, 50)
 
-tab_inspect, tab_bench, tab_fusion = st.tabs(list(("1. Optical Inspection & Cost Gate", "2. Benchmark, Heatmap & Failure Analysis", "3. Multi-Modal Sensor+Vision Fusion & API")))
+tab_inspect, tab_bench, tab_fusion = st.tabs(list(("1. Optical Inspection & Cost Gate", "2. Benchmark, Heatmap & Failure Analysis", "3. Decision-Level Fusion Demo (Simulated)")))
 
 with tab_inspect:
     image_bgr = None
@@ -187,8 +187,13 @@ with tab_bench:
 
 
 with tab_fusion:
-    st.subheader("Multi-Modal Fab Quality Fusion (SiliconGuard Sensor + Vision Inspector)")
-    st.caption("Late-fusion decision architecture combining upstream machine telemetry risk with downstream optical defect inspection.")
+    st.subheader("Decision-Level Multi-Modal Integration Demo (Simulated)")
+    st.info(
+        "**Integration Scope Notice:** UCI SECOM sensor wafers and synthetic PCB images come from separate datasets (no 1-to-1 physical pairing). "
+        "This tab demonstrates a **decision-level late-fusion architecture** using interactive scenario inputs and a 100-wafer simulated lot.\n\n"
+        "**Explicit Formula:** `Fused Risk = 0.45 × Sensor_Risk + 0.45 × Vision_Risk + 0.10 × (Sensor_Risk × Vision_Risk)` | "
+        "**Routing Rule:** `>= 65%` or `>= 2 defects` → **BLOCK_PACKAGING** | `35%–65%` or `Sensor >= 75%` → **SECONDARY_LAB_CHECK** | `< 35%` → **RELEASE_TO_CUSTOMER**"
+    )
     fc1, fc2, fc3 = st.columns(3)
     with fc1:
         sim_sensor_p = st.slider("Upstream Sensor Defect Risk (from SiliconGuard AI %)", 1, 99, 42, 1) / 100.0
@@ -209,5 +214,9 @@ with tab_fusion:
     lot_df = simulate_fab_lot_fusion(n_wafers=100, seed=42)
     st.dataframe(lot_df.head(15), use_container_width=True, hide_index=True)
 
-    st.markdown("### Production Microservice Architecture (FastAPI + Docker)")
-    st.code("uvicorn api:app --host 0.0.0.0 --port 8000\n# POST /api/v1/inspect-multimodal -> JSON telemetry + routing decision", language="bash")
+    st.markdown("### Live FastAPI Inference Endpoint Preview (`POST /api/v1/inspect-multimodal`)")
+    st.caption("Defined in `api.py` and containerized in `Dockerfile` (verified via `TestClient` in `tests/test_vision.py`).")
+    st.json({
+        "request_payload": {"sensor_defect_prob": round(sim_sensor_p, 2), "vision_defects": sim_vis_cnt, "vision_area_px": sim_vis_area},
+        "multimodal_decision": f_res,
+    })
