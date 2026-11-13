@@ -49,7 +49,12 @@ st.sidebar.markdown("### Economic Bridge (Linked to SiliconGuard AI)")
 cost_missed = st.sidebar.number_input("Packaging Loss per Missed Defect ($)", 500, 25000, 4500, 100)
 cost_false_alarm = st.sidebar.number_input("Quarantine Cost per False Alarm ($)", 50, 5000, 400, 50)
 
-tab_inspect, tab_bench, tab_fusion = st.tabs(list(("1. Optical Inspection & Cost Gate", "2. Benchmark, Heatmap & Failure Analysis", "3. Decision-Level Fusion Demo (Simulated)")))
+tab_inspect, tab_bench, tab_fusion, tab_edge = st.tabs([
+    "1. Optical Inspection & Cost Gate",
+    "2. Benchmark, Heatmap & Failure Analysis",
+    "3. Decision-Level Fusion Demo (Simulated)",
+    "4. Pixel Segmentation, PatchCore & Edge AI"
+])
 
 with tab_inspect:
     image_bgr = None
@@ -220,3 +225,55 @@ with tab_fusion:
         "request_payload": {"sensor_defect_prob": round(sim_sensor_p, 2), "vision_defects": sim_vis_cnt, "vision_area_px": sim_vis_area},
         "multimodal_decision": f_res,
     })
+# ==============================================================================
+# TAB 4: PIXEL SEGMENTATION, FEW-SHOT PATCHCORE & EDGE AI BENCHMARK
+# ==============================================================================
+from src.edge_segmentation import (
+    run_pixel_segmentation,
+    compute_patchcore_anomaly_map,
+    benchmark_edge_inference,
+)
+
+with tab_edge:
+    st.subheader("🔬 Deep Pixel Segmentation, Few-Shot PatchCore & Edge AI")
+    st.caption(
+        "Extends bounding-box inspection with pixel-level defect segmentation masks, "
+        "unsupervised PatchCore anomaly heatmaps, and Edge ONNX latency benchmarking."
+    )
+
+    # Mevcut secili goruntuyu kullan, eger yoksa ornek bir kusurlu PCB uret
+    if image_bgr is not None and ref_bgr is not None:
+        seg_test_rgb = cv2.cvtColor(image_bgr, cv2.COLOR_BGR2RGB)
+        seg_golden_rgb = cv2.cvtColor(ref_bgr, cv2.COLOR_BGR2RGB)
+    else:
+        seg_golden_rgb, seg_test_rgb, _ = generate_synthetic_pcb(seed=42, inject_defect=True)
+
+    # 1. Pixel Segmentation & 2. PatchCore Anomaly Heatmap
+    pixel_mask, seg_overlay, defect_px, defect_pct = run_pixel_segmentation(
+        seg_golden_rgb, seg_test_rgb, sensitivity=sensitivity
+    )
+    patch_heatmap, max_anom = compute_patchcore_anomaly_map(seg_golden_rgb, seg_test_rgb)
+
+    m_e1, m_e2, m_e3 = st.columns(3)
+    m_e1.metric("Segmented Defect Area", f"{defect_px} px")
+    m_e2.metric("Surface Defect Coverage", f"{defect_pct}%")
+    m_e3.metric("PatchCore Max Anomaly Score", f"{max_anom}")
+
+    col_v1, col_v2, col_v3 = st.columns(3)
+    with col_v1:
+        st.image(seg_overlay, caption="Pixel-Level Defect Segmentation Overlay", use_container_width=True)
+    with col_v2:
+        st.image(pixel_mask, caption="Binary Segmentation Mask (U-Net / Morph)", use_container_width=True)
+    with col_v3:
+        st.image(patch_heatmap, caption="Few-Shot PatchCore Anomaly Heatmap", use_container_width=True)
+
+    st.markdown("---")
+    st.markdown("#### ⚡ Edge Device Inference Latency & FPS Benchmark (Jetson / ONNX Simulation)")
+    if st.button("Run Real-Time Edge Inference Benchmark"):
+        with st.spinner("Measuring single-frame and quantized Edge latency across 30 iterations..."):
+            bench = benchmark_edge_inference(seg_golden_rgb, seg_test_rgb, iterations=30)
+            b1, b2, b3, b4 = st.columns(4)
+            b1.metric("Standard Python Latency", f"{bench['standard_latency_ms']} ms")
+            b2.metric("Standard Throughput", f"{bench['standard_fps']} FPS")
+            b3.metric("Edge Quantized Latency", f"{bench['edge_optimized_ms']} ms")
+            b4.metric("Edge Real-Time Throughput", f"{bench['edge_fps']} FPS")
